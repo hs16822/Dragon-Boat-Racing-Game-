@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Dragon Boat Listening Race - Duanwu Edition</title>
+<style>
+    /* =========================================================
+       端午節龍舟聽音選圖競賽
+       - 兩隊聽同一個單字
+       - 龍舟由下往上划到終點
+       - 答越快，龍舟前進越多
+       - 連續三題先答對可射箭讓對方後退
+       - 預設只顯示圖片，可切換顯示英文
+       ========================================================= */
+    :root {
+        --blue: #2563eb;
+        --blue-light: #60a5fa;
+        --red: #dc2626;
+        --red-light: #f87171;
+        --gold: #facc15;
+        --green: #166534;
+        --water-1: #7dd3fc;
+        --water-2: #0284c7;
+        --water-3: #0f766e;
+        --panel: rgba(2, 44, 34, 0.84);
+        --paper: #fff7ed;
+    }
+
+    * {
+        box-sizing: border-box;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+        font-family: "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+    }
+
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        overscroll-behavior: none;
+        background: #064e3b;
+        color: #fff;
+    }
+
+    body {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    img, button {
+        -webkit-user-drag: none;
+        user-drag: none;
+    }
+
+    button {
+        cursor: pointer;
+        border: none;
+    }
+
+    /* =========================================================
+       大廳
+       ========================================================= */
+    #lobby {
+        position: fixed;
+        inset: 0;
+        z-index: 300;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 22px;
+        padding: 28px;
+        background:
+            radial-gradient(circle at 18% 20%, rgba(250,204,21,.35), transparent 22%),
+            radial-gradient(circle at 82% 18%, rgba(255,255,255,.25), transparent 20%),
+            linear-gradient(160deg, rgba(6,78,59,.96), rgba(14,116,144,.96) 45%, rgba(22,101,52,.96));
+        transition: opacity .45s ease;
+    }
+
+    #lobby.hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .lobby-card {
+        width: min(1050px, 94vw);
+        border: 5px solid rgba(255,255,255,.88);
+        border-radius: 36px;
+        padding: 34px 34px 30px;
+        background:
+            linear-gradient(135deg, rgba(255,247,237,.18), rgba(255,255,255,.08)),
+            rgba(0,0,0,.26);
+        box-shadow: 0 26px 80px rgba(0,0,0,.35);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .lobby-card::before,
+    .lobby-card::after {
+        content: "";
+        position: absolute;
+        width: 210px;
+        height: 80px;
+        background: rgba(250,204,21,.18);
+        border-radius: 50%;
+        transform: rotate(-25deg);
+        pointer-events: none;
+    }
+    .lobby-card::before { left: -60px; top: 38px; }
+    .lobby-card::after { right: -70px; bottom: 44px; }
+
+    .duanwu-title {
+        margin: 0 0 10px;
+        font-size: clamp(3rem, 7vw, 6.5rem);
+        line-height: 1;
+        font-weight: 1000;
+        letter-spacing: 2px;
+        text-shadow: 0 6px 0 rgba(0,0,0,.25), 0 0 26px rgba(250,204,21,.8);
+    }
+
+    .subtitle {
+        margin: 0 0 22px;
+        font-size: clamp(1.2rem, 2.4vw, 2rem);
+        font-weight: 800;
+        color: #fef3c7;
+        letter-spacing: 1px;
+    }
+
+    .time-select {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin: 18px 0 8px;
+    }
+
+    .btn-time {
+        padding: 12px 28px;
+        border-radius: 999px;
+        border: 3px solid rgba(255,255,255,.9);
+        background: rgba(255,255,255,.1);
+        color: #fff;
+        font-size: clamp(1.3rem, 2.2vw, 1.8rem);
+        font-weight: 1000;
+        transition: transform .15s ease, background .15s ease, color .15s ease;
+    }
+
+    .btn-time.selected {
+        background: var(--gold);
+        color: #1f2937;
+        transform: scale(1.08);
+        box-shadow: 0 0 28px rgba(250,204,21,.5);
+    }
+
+    .teacher-options {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin: 16px 0 8px;
+        font-size: 1.25rem;
+        font-weight: 800;
+    }
+
+    .toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        border-radius: 18px;
+        background: rgba(255,255,255,.14);
+        border: 2px solid rgba(255,255,255,.36);
+    }
+
+    .toggle input {
+        width: 25px;
+        height: 25px;
+        accent-color: #facc15;
+    }
+
+    .btn-start {
+        margin-top: 16px;
+        padding: 18px 70px;
+        border-radius: 999px;
+        border: 5px solid #fff;
+        background: linear-gradient(45deg, #facc15, #f97316 48%, #dc2626);
+        color: #fff;
+        font-size: clamp(2rem, 4.8vw, 3.8rem);
+        font-weight: 1000;
+        text-shadow: 0 4px 0 rgba(0,0,0,.22);
+        box-shadow: 0 16px 0 rgba(127,29,29,.7), 0 28px 55px rgba(0,0,0,.38);
+        transition: transform .08s ease, box-shadow .08s ease;
+    }
+
+    .btn-start:active {
+        transform: translateY(10px);
+        box-shadow: 0 6px 0 rgba(127,29,29,.7), 0 18px 45px rgba(0,0,0,.34);
+    }
+
+    .lobby-tip {
+        margin: 20px auto 0;
+        max-width: 920px;
+        font-size: 1.08rem;
+        color: rgba(255,255,255,.92);
+        line-height: 1.55;
+    }
+
+    /* =========================================================
+       頂部計分列：盡量縮小，保留更長賽道
+       ========================================================= */
+    .top-bar {
+        flex: 0 0 68px;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 12px;
+        padding: 7px 22px;
+        background:
+            linear-gradient(90deg, rgba(37,99,235,.28), rgba(6,78,59,.96) 28%, rgba(6,78,59,.96) 72%, rgba(220,38,38,.28)),
+            #064e3b;
+        border-bottom: 4px solid rgba(250,204,21,.75);
+        box-shadow: 0 8px 24px rgba(0,0,0,.22);
+        z-index: 80;
+    }
+
+    .score-board {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 0;
+        font-size: clamp(1.5rem, 2.6vw, 2.7rem);
+        font-weight: 1000;
+        white-space: nowrap;
+        text-shadow: 0 3px 0 rgba(0,0,0,.22);
+    }
+
+    .score-board.red {
+        justify-content: flex-end;
+    }
+
+    .score-board .combo {
+        font-size: clamp(.85rem, 1.5vw, 1.15rem);
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.15);
+        border: 2px solid rgba(255,255,255,.25);
+        color: #fef3c7;
+    }
+
+    .center-tools {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .timer {
+        min-width: 95px;
+        text-align: center;
+        font-size: clamp(2.1rem, 4vw, 3.8rem);
+        line-height: 1;
+        font-weight: 1000;
+        color: var(--gold);
+        text-shadow: 0 4px 0 rgba(0,0,0,.25), 0 0 14px rgba(250,204,21,.65);
+    }
+
+    .small-btn {
+        padding: 9px 13px;
+        border-radius: 14px;
+        background: rgba(255,255,255,.14);
+        color: #fff;
+        border: 2px solid rgba(255,255,255,.28);
+        font-size: 1rem;
+        font-weight: 900;
+    }
+
+    .small-btn:active { transform: scale(.96); }
+
+    #top-word-toggle {
+        width: 20px;
+        height: 20px;
+        accent-color: #facc15;
+    }
+
+    .top-toggle-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 10px;
+        border-radius: 14px;
+        background: rgba(255,255,255,.12);
+        border: 2px solid rgba(255,255,255,.22);
+        font-weight: 900;
+        font-size: .95rem;
+    }
+
+    /* =========================================================
+       競賽區：拉長賽道
+       ========================================================= */
+    #game-arena {
+        position: relative;
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        overflow: hidden;
+        background:
+            radial-gradient(circle at 15% 10%, rgba(255,255,255,.34), transparent 11%),
+            radial-gradient(circle at 78% 18%, rgba(255,255,255,.22), transparent 10%),
+            linear-gradient(to bottom, rgba(186,230,253,.95) 0%, rgba(125,211,252,.86) 18%, rgba(14,165,233,.96) 56%, rgba(8,145,178,.98) 100%);
+    }
+
+    #game-arena::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        background:
+            repeating-linear-gradient(115deg, rgba(255,255,255,.11) 0 3px, transparent 3px 54px),
+            repeating-linear-gradient(70deg, rgba(22,101,52,.16) 0 14px, transparent 14px 120px);
+        opacity: .72;
+        pointer-events: none;
+    }
+
+    /* 動態水面波浪：讓賽道有划龍舟的流動感 */
+    #game-arena::after {
+        content: "";
+        position: absolute;
+        inset: -4% -12%;
+        z-index: 1;
+        pointer-events: none;
+        background-image:
+            radial-gradient(80px 24px at 36px 24px, transparent 55%, rgba(255,255,255,.38) 58%, transparent 66%),
+            radial-gradient(110px 30px at 80px 54px, transparent 55%, rgba(255,255,255,.22) 58%, transparent 66%),
+            radial-gradient(90px 22px at 120px 16px, transparent 56%, rgba(186,230,253,.24) 59%, transparent 67%);
+        background-size: 170px 76px, 220px 92px, 260px 86px;
+        background-position: 0 0, 60px 18px, 20px 42px;
+        opacity: .9;
+        animation: wave-drift 8s linear infinite;
+        mix-blend-mode: screen;
+    }
+
+    @keyframes wave-drift {
+        0% { background-position: 0 0, 60px 18px, 20px 42px; }
+        100% { background-position: 170px 76px, -160px 110px, 280px 128px; }
+    }
+
+    .bamboo-leaf {
+        position: absolute;
+        width: 135px;
+        height: 35px;
+        border-radius: 100% 0 100% 0;
+        background: rgba(22,101,52,.34);
+        transform: rotate(-20deg);
+        z-index: 2;
+        pointer-events: none;
+    }
+    .leaf-1 { left: 3%; top: 15%; }
+    .leaf-2 { right: 4%; top: 28%; transform: rotate(22deg); }
+    .leaf-3 { left: 45%; bottom: 12%; transform: rotate(12deg); opacity: .55; }
+
+    .finish-line {
+        position: absolute;
+        top: 4.2%;
+        left: 2.5%;
+        width: 95%;
+        height: 8px;
+        background: repeating-linear-gradient(90deg, #fff 0 24px, #dc2626 24px 48px);
+        border-radius: 999px;
+        box-shadow: 0 0 0 4px rgba(250,204,21,.65), 0 0 28px rgba(220,38,38,.82);
+        z-index: 12;
+    }
+
+    .finish-text {
+        position: absolute;
+        top: calc(4.2% + 12px);
+        width: 100%;
+        text-align: center;
+        z-index: 12;
+        color: #7f1d1d;
+        font-size: clamp(1rem, 2vw, 1.7rem);
+        font-weight: 1000;
+        letter-spacing: .65em;
+        text-shadow: 0 2px 0 rgba(255,255,255,.7);
+    }
+
+    .divider {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 5px;
+        height: 100%;
+        transform: translateX(-50%);
+        background: linear-gradient(to bottom, transparent, rgba(255,255,255,.45) 8%, rgba(255,255,255,.25) 92%, transparent);
+        z-index: 9;
+    }
+
+    .track {
+        flex: 1;
+        position: relative;
+        height: 100%;
+        min-width: 0;
+        z-index: 3;
+    }
+
+    .track::after {
+        content: "";
+        position: absolute;
+        left: 10%;
+        right: 10%;
+        bottom: 9%;
+        height: 78%;
+        border-left: 4px dashed rgba(255,255,255,.22);
+        border-right: 4px dashed rgba(255,255,255,.22);
+        border-radius: 48px;
+        pointer-events: none;
+    }
+
+    .team-label {
+        position: absolute;
+        top: 11%;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 14;
+        padding: 7px 18px;
+        border-radius: 999px;
+        font-size: clamp(1rem, 1.8vw, 1.45rem);
+        font-weight: 1000;
+        background: rgba(255,255,255,.22);
+        border: 3px solid rgba(255,255,255,.35);
+        text-shadow: 0 2px 0 rgba(0,0,0,.22);
+        white-space: nowrap;
+    }
+
+    .track.blue .team-label { color: #dbeafe; }
+    .track.red .team-label { color: #fee2e2; }
+
+    .boat-wrapper {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        /* 龍舟改為直向：wrapper 用直立尺寸，圖片在裡面旋轉 90 度，龍頭朝上 */
+        width: 142px;
+        height: 318px;
+        transform: translateX(-50%) scale(.48);
+        transform-origin: bottom center;
+        z-index: 15;
+        transition: bottom .42s cubic-bezier(.2, .85, .15, 1.2), filter .18s ease;
+    }
+
+    .boat-img {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 310px;
+        height: 118px;
+        object-fit: contain;
+        transform: translate(-50%, -50%) rotate(90deg);
+        transform-origin: center center;
+        filter: drop-shadow(0 13px 8px rgba(0,0,0,.28));
+        pointer-events: none;
+    }
+
+    .boat-wrapper.blue-boat .boat-img {
+        filter: drop-shadow(0 13px 8px rgba(0,0,0,.28)) hue-rotate(172deg) saturate(1.25);
+    }
+
+    .boat-wrapper.red-boat .boat-img {
+        filter: drop-shadow(0 13px 8px rgba(0,0,0,.28)) hue-rotate(-18deg) saturate(1.18);
+    }
+
+    .boat-wrapper.paddling {
+        animation: boat-rock .42s ease;
+    }
+
+    .boat-wrapper.hit {
+        animation: boat-hit .5s ease;
+        filter: brightness(1.25) drop-shadow(0 0 22px rgba(255,255,255,.88));
+    }
+
+    .wake {
+        position: absolute;
+        left: 35px;
+        right: 35px;
+        bottom: 4px;
+        height: 24px;
+        border-radius: 50%;
+        background: radial-gradient(ellipse at center, rgba(255,255,255,.74), rgba(255,255,255,.12) 55%, transparent 70%);
+        opacity: .65;
+        animation: wake-pulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes wake-pulse {
+        0%, 100% { transform: scaleX(.88); opacity: .45; }
+        50% { transform: scaleX(1.15); opacity: .75; }
+    }
+
+    @keyframes boat-rock {
+        0% { transform: translateX(-50%) scale(.48) rotate(0deg); }
+        35% { transform: translateX(-50%) scale(.48) rotate(-4deg) translateY(-8px); }
+        70% { transform: translateX(-50%) scale(.48) rotate(3deg) translateY(-3px); }
+        100% { transform: translateX(-50%) scale(.48) rotate(0deg); }
+    }
+
+    @keyframes boat-hit {
+        0% { transform: translateX(-50%) scale(.48); }
+        20% { transform: translateX(calc(-50% - 22px)) scale(.48); }
+        45% { transform: translateX(calc(-50% + 18px)) scale(.48); }
+        70% { transform: translateX(calc(-50% - 10px)) scale(.48); }
+        100% { transform: translateX(-50%) scale(.48); }
+    }
+
+    .round-banner {
+        position: absolute;
+        z-index: 45;
+        left: 50%;
+        top: 40%;
+        transform: translate(-50%, -50%) scale(.92);
+        min-width: min(720px, 86vw);
+        padding: 22px 34px;
+        border-radius: 28px;
+        background: rgba(0,0,0,.72);
+        border: 5px solid rgba(255,255,255,.88);
+        font-size: clamp(2rem, 5vw, 5rem);
+        font-weight: 1000;
+        text-align: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .22s ease, transform .22s ease;
+        text-shadow: 0 4px 0 rgba(0,0,0,.35);
+    }
+
+    .round-banner.show {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    .arrow-shot {
+        position: absolute;
+        z-index: 60;
+        top: 52%;
+        left: 50%;
+        font-size: 4.6rem;
+        line-height: 1;
+        opacity: 0;
+        pointer-events: none;
+        filter: drop-shadow(0 5px 3px rgba(0,0,0,.32));
+    }
+
+    .arrow-shot.fly-right {
+        animation: fly-right .86s ease-in-out;
+    }
+
+    .arrow-shot.fly-left {
+        animation: fly-left .86s ease-in-out;
+    }
+
+    @keyframes fly-right {
+        0% { opacity: 0; transform: translate(-240px, 40px) rotate(20deg) scale(.75); }
+        12% { opacity: 1; }
+        78% { opacity: 1; }
+        100% { opacity: 0; transform: translate(240px, -30px) rotate(20deg) scale(1.1); }
+    }
+
+    @keyframes fly-left {
+        0% { opacity: 0; transform: translate(240px, 40px) rotate(160deg) scale(.75); }
+        12% { opacity: 1; }
+        78% { opacity: 1; }
+        100% { opacity: 0; transform: translate(-240px, -30px) rotate(160deg) scale(1.1); }
+    }
+
+    /* =========================================================
+       選圖區：壓低高度、保留大圖可觸控
+       ========================================================= */
+    .choice-zone {
+        flex: 0 0 22vh;
+        min-height: 150px;
+        max-height: 230px;
+        display: flex;
+        background:
+            linear-gradient(180deg, rgba(6,78,59,.94), rgba(2,44,34,.98));
+        border-top: 4px solid rgba(250,204,21,.8);
+        z-index: 70;
+        box-shadow: 0 -10px 32px rgba(0,0,0,.24);
+    }
+
+    .choice-half {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        padding: 8px 13px 10px;
+        gap: 8px;
+    }
+
+    .choice-half:first-child {
+        border-right: 3px solid rgba(255,255,255,.22);
+    }
+
+    .choice-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: clamp(.85rem, 1.6vw, 1.2rem);
+        font-weight: 1000;
+        color: #fef3c7;
+        letter-spacing: 1px;
+        min-height: 22px;
+    }
+
+    .choice-feedback {
+        font-size: .95rem;
+        font-weight: 1000;
+        color: #fff;
+        min-width: 110px;
+        text-align: right;
+    }
+
+    .choices-grid {
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 9px;
+        min-height: 0;
+    }
+
+    .choice-card {
+        position: relative;
+        min-width: 0;
+        min-height: 0;
+        height: 100%;
+        border-radius: 18px;
+        border: 4px solid rgba(255,255,255,.55);
+        background:
+            radial-gradient(circle at 50% 20%, rgba(255,255,255,.95), rgba(255,247,237,.88) 62%, rgba(253,230,138,.75));
+        box-shadow: 0 9px 0 rgba(0,0,0,.28);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 6px;
+        overflow: hidden;
+        transition: transform .06s ease, filter .16s ease, border-color .16s ease;
+    }
+
+    .choice-card:active:not(:disabled) {
+        transform: translateY(7px) scale(.98);
+        box-shadow: 0 2px 0 rgba(0,0,0,.3);
+    }
+
+    .choice-card:disabled {
+        opacity: .72;
+        filter: grayscale(.15);
+    }
+
+    .choice-card.correct {
+        border-color: #22c55e;
+        filter: brightness(1.12);
+        animation: correct-pop .45s ease;
+    }
+
+    .choice-card.wrong {
+        border-color: #ef4444;
+        animation: wrong-shake .35s ease;
+    }
+
+    .choice-card img {
+        width: 100%;
+        height: calc(100% - 24px);
+        min-height: 68px;
+        object-fit: contain;
+        pointer-events: none;
+    }
+
+    .word-label {
+        display: none;
+        width: 100%;
+        margin-top: 2px;
+        text-align: center;
+        color: #1f2937;
+        font-size: clamp(.78rem, 1.35vw, 1.05rem);
+        font-weight: 1000;
+        line-height: 1.08;
+        text-shadow: 0 1px 0 rgba(255,255,255,.75);
+    }
+
+    body.show-words .word-label {
+        display: block;
+    }
+
+    @keyframes correct-pop {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.08); }
+        100% { transform: scale(1); }
+    }
+
+    @keyframes wrong-shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-8px); }
+        50% { transform: translateX(8px); }
+        75% { transform: translateX(-4px); }
+    }
+
+    /* =========================================================
+       結算畫面
+       ========================================================= */
+    #winner-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 400;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 28px;
+        background: rgba(0,0,0,.93);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .35s ease;
+    }
+
+    #winner-screen.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    #winner-text {
+        font-size: clamp(3.2rem, 8vw, 8rem);
+        font-weight: 1000;
+        text-align: center;
+        line-height: 1.08;
+        text-shadow: 0 5px 0 rgba(0,0,0,.35), 0 0 26px rgba(250,204,21,.55);
+    }
+
+    #final-score {
+        font-size: clamp(1.6rem, 3vw, 2.8rem);
+        font-weight: 900;
+        color: #fef3c7;
+    }
+
+    .paused {
+        opacity: .42;
+        filter: grayscale(.35);
+    }
+
+    @media (max-height: 720px) {
+        .top-bar { flex-basis: 58px; padding: 5px 16px; }
+        .choice-zone { flex-basis: 20vh; min-height: 126px; }
+        .choice-card { border-radius: 14px; border-width: 3px; }
+        .choice-card img { min-height: 52px; }
+        .boat-wrapper { transform: translateX(-50%) scale(.40); }
+        @keyframes boat-rock {
+            0% { transform: translateX(-50%) scale(.42) rotate(0deg); }
+            35% { transform: translateX(-50%) scale(.42) rotate(-4deg) translateY(-8px); }
+            70% { transform: translateX(-50%) scale(.42) rotate(3deg) translateY(-3px); }
+            100% { transform: translateX(-50%) scale(.42) rotate(0deg); }
+        }
+        @keyframes boat-hit {
+            0% { transform: translateX(-50%) scale(.42); }
+            20% { transform: translateX(calc(-50% - 22px)) scale(.42); }
+            45% { transform: translateX(calc(-50% + 18px)) scale(.42); }
+            70% { transform: translateX(calc(-50% - 10px)) scale(.42); }
+            100% { transform: translateX(-50%) scale(.42); }
+        }
+    }
+</style>
+</head>
+<body>
+
+<div id="lobby">
+    <div class="lobby-card">
+        <h1 class="duanwu-title">端午龍舟賽</h1>
+        <p class="subtitle">Dragon Boat Listening Race</p>
+
+        <div class="time-select" aria-label="選擇遊戲時間">
+            <button class="btn-time selected" data-time="60">60s</button>
+            <button class="btn-time" data-time="90">90s</button>
+            <button class="btn-time" data-time="120">120s</button>
+            <button class="btn-time" data-time="150">150s</button>
+            <button class="btn-time" data-time="180">180s</button>
+        </div>
+
+        <div class="teacher-options">
+            <label class="toggle">
+                <input type="checkbox" id="show-word-toggle">
+                顯示英文單字 Show words
+            </label>
+            <button class="small-btn" id="btn-test-audio" type="button">🔊 測試發音</button>
+        </div>
+
+        <button class="btn-start" id="btn-start" type="button">START</button>
+        <p class="lobby-tip">
+            兩隊聽同一個單字後選圖片。答越快，龍舟划越快；連續三題先答對，可以射箭讓對方後退。預設只顯示圖片，老師可打開英文提示。
+        </p>
+    </div>
+</div>
+
+<div class="top-bar">
+    <div class="score-board blue" style="color: var(--blue-light);">
+        BLUE: <span id="score-blue">0</span>
+        <span class="combo">Combo <span id="combo-blue">0</span>/3</span>
+    </div>
+
+    <div class="center-tools">
+        <button class="small-btn" id="btn-listen" type="button">🔊 Listen</button>
+        <div class="timer" id="timer-display">60</div>
+        <button class="small-btn" id="btn-fullscreen" type="button">⛶</button>
+        <label class="top-toggle-label" title="顯示或隱藏英文單字">
+            <input type="checkbox" id="top-word-toggle"> ABC
+        </label>
+    </div>
+
+    <div class="score-board red" style="color: var(--red-light);">
+        <span class="combo">Combo <span id="combo-red">0</span>/3</span>
+        RED: <span id="score-red">0</span>
+    </div>
+</div>
+
+<div id="game-arena">
+    <div class="bamboo-leaf leaf-1"></div>
+    <div class="bamboo-leaf leaf-2"></div>
+    <div class="bamboo-leaf leaf-3"></div>
+
+    <div class="finish-line"></div>
+    <div class="finish-text">FINISH</div>
+    <div class="divider"></div>
+
+    <section class="track blue">
+        <div class="team-label">TEAM BLUE</div>
+        <div class="boat-wrapper blue-boat" id="boat-blue">
+            <div class="wake"></div>
+            <img class="boat-img" id="boat-blue-img" alt="Blue dragon boat">
+        </div>
+    </section>
+
+    <section class="track red">
+        <div class="team-label">TEAM RED</div>
+        <div class="boat-wrapper red-boat" id="boat-red">
+            <div class="wake"></div>
+            <img class="boat-img" id="boat-red-img" alt="Red dragon boat">
+        </div>
+    </section>
+
+    <div class="round-banner" id="round-banner">READY?</div>
+    <div class="arrow-shot" id="arrow-shot">➶</div>
+</div>
+
+<div class="choice-zone">
+    <section class="choice-half">
+        <div class="choice-title">
+            <span>BLUE 選圖區</span>
+            <span class="choice-feedback" id="feedback-blue"></span>
+        </div>
+        <div class="choices-grid" id="choices-blue"></div>
+    </section>
+
+    <section class="choice-half">
+        <div class="choice-title">
+            <span>RED 選圖區</span>
+            <span class="choice-feedback" id="feedback-red"></span>
+        </div>
+        <div class="choices-grid" id="choices-red"></div>
+    </section>
+</div>
+
+<div id="winner-screen">
+    <div id="winner-text">WINNER!</div>
+    <div id="final-score">BLUE 0 : 0 RED</div>
+    <button class="btn-start" type="button" onclick="location.reload()">PLAY AGAIN</button>
+</div>
+
+<script>
+    /* =========================================================
+       觸控螢幕防誤觸：禁止長按右鍵、拖曳、文字選取、雙指縮放
+       ========================================================= */
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('selectstart', e => e.preventDefault());
+    document.addEventListener('dragstart', e => e.preventDefault());
+    document.addEventListener('gesturestart', e => e.preventDefault());
+    document.addEventListener('touchstart', e => {
+        if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
+
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', e => {
+        const now = Date.now();
+        if (now - lastTouchEnd <= 300) e.preventDefault();
+        lastTouchEnd = now;
+    }, { passive: false });
+
+    /* =========================================================
+       圖片設定
+       把你提供的五張圖片放在同一資料夾 images，並使用以下檔名：
+       images/rice-dumpling.png
+       images/dragon-boat.png
+       images/stand-an-egg.png
+       images/qu-yuan.png
+       images/sachet.png
+       若圖片不存在，程式會自動使用內建 SVG 備用圖。
+       ========================================================= */
+    function svgData(svg) {
+        return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+    }
+
+    const FALLBACK = {
+        riceDumpling: svgData(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 300">
+                <rect width="420" height="300" fill="transparent"/>
+                <path d="M54 195 C95 86, 252 40, 355 176 C285 220, 157 237, 54 195Z" fill="#4d7c0f"/>
+                <path d="M73 190 C127 134, 210 111, 338 174" fill="none" stroke="#86a83c" stroke-width="13" stroke-linecap="round"/>
+                <path d="M158 205 L211 73 L294 206 Z" fill="#e9a646" stroke="#c47a20" stroke-width="7"/>
+                <path d="M178 185 C208 202, 249 202, 276 184" stroke="#f6d18a" stroke-width="8" fill="none"/>
+                <circle cx="205" cy="118" r="7" fill="#f8d9a0"/><circle cx="231" cy="145" r="6" fill="#f8d9a0"/><circle cx="254" cy="115" r="5" fill="#f8d9a0"/>
+            </svg>`),
+        dragonBoat: svgData(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300">
+                <rect width="720" height="300" fill="transparent"/>
+                <path d="M78 178 C187 233, 486 241, 640 177 L604 220 C433 262, 223 253, 94 220Z" fill="#7cb342" stroke="#7f1d1d" stroke-width="10"/>
+                <path d="M95 166 C75 126, 42 121, 30 93 C68 87, 104 97, 125 122 C150 91, 195 71, 250 83 C221 115, 205 147, 195 176Z" fill="#bef264" stroke="#7f1d1d" stroke-width="9"/>
+                <circle cx="121" cy="117" r="19" fill="#fff"/><circle cx="127" cy="119" r="10" fill="#111"/>
+                <path d="M250 172 L590 172" stroke="#7f1d1d" stroke-width="10" stroke-linecap="round"/>
+                <path d="M253 193 C315 211, 455 213, 560 194" stroke="#2563eb" stroke-width="10" opacity=".65" fill="none"/>
+                <path d="M300 138 L330 228 M410 138 L440 228 M520 138 L550 228" stroke="#7f1d1d" stroke-width="12" stroke-linecap="round"/>
+                <path d="M628 172 C655 135, 661 105, 646 76 C685 103, 706 139, 684 194Z" fill="#facc15" stroke="#7f1d1d" stroke-width="9"/>
+            </svg>`),
+        standEgg: svgData(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 300">
+                <rect width="420" height="300" fill="transparent"/>
+                <circle cx="205" cy="84" r="55" fill="#f4c79d"/>
+                <path d="M153 62 C171 20, 256 24, 260 69 C233 49, 184 53, 153 62Z" fill="#111827"/>
+                <circle cx="185" cy="82" r="8" fill="#111"/><circle cx="231" cy="82" r="8" fill="#111"/>
+                <path d="M188 108 C203 121, 225 120, 238 108" stroke="#b91c1c" stroke-width="7" fill="none" stroke-linecap="round"/>
+                <path d="M125 226 C132 154, 281 154, 294 226Z" fill="#0f766e"/>
+                <ellipse cx="285" cy="187" rx="45" ry="63" fill="#fff" stroke="#e5e7eb" stroke-width="8"/>
+                <path d="M80 246 H332" stroke="#78350f" stroke-width="28" stroke-linecap="round"/>
+            </svg>`),
+        quYuan: svgData(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 300">
+                <rect width="420" height="300" fill="transparent"/>
+                <path d="M203 30 C227 63, 274 47, 315 70 L283 96 C243 86, 219 89, 187 75Z" fill="#1f4b5a" stroke="#111827" stroke-width="7"/>
+                <ellipse cx="189" cy="83" rx="55" ry="48" fill="#f5d6a7" stroke="#111827" stroke-width="7"/>
+                <path d="M145 87 C156 98, 180 102, 202 92" stroke="#111827" stroke-width="6" fill="none"/>
+                <path d="M207 98 C196 122, 181 139, 157 150" stroke="#111827" stroke-width="8" fill="none" stroke-linecap="round"/>
+                <path d="M146 137 C116 166, 104 222, 123 256 C167 274, 240 272, 294 250 C277 194, 257 156, 220 133Z" fill="#315563" stroke="#111827" stroke-width="8"/>
+                <path d="M159 150 C178 174, 218 173, 238 151" stroke="#8dd6d6" stroke-width="10" fill="none"/>
+                <path d="M253 157 L309 113" stroke="#7c2d12" stroke-width="14" stroke-linecap="round"/>
+                <path d="M123 182 L86 146" stroke="#111827" stroke-width="10" stroke-linecap="round"/>
+            </svg>`),
+        sachet: svgData(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 300">
+                <rect width="420" height="300" fill="transparent"/>
+                <path d="M163 48 C172 9, 219 13, 207 73" fill="none" stroke="#16a34a" stroke-width="8"/>
+                <path d="M137 84 C174 66, 234 66, 272 84 C257 116, 271 163, 296 212 C248 237, 164 237, 116 212 C140 164, 153 119, 137 84Z" fill="#16a34a" stroke="#166534" stroke-width="8"/>
+                <path d="M155 100 C188 116, 228 116, 258 99" stroke="#14532d" stroke-width="8" fill="none"/>
+                <path d="M210 136 L238 169 L210 203 L182 169Z" fill="#fff7ed" opacity=".95"/>
+                <path d="M158 220 C155 250, 150 269, 142 292 M181 224 C180 255, 178 273, 174 294 M210 226 C210 257, 210 275, 210 296 M238 224 C240 256, 242 274, 246 294 M264 219 C270 249, 276 270, 284 292" stroke="#16a34a" stroke-width="5"/>
+            </svg>`)
+    };
+
+    const VOCAB = [
+        {
+            key: 'rice-dumpling',
+            word: 'rice dumpling',
+            speakText: 'rice dumpling',
+            lang: 'en-US',
+            image: 'images/rice-dumpling.png',
+            fallback: FALLBACK.riceDumpling
+        },
+        {
+            key: 'dragon-boat',
+            word: 'dragon boat',
+            speakText: 'dragon boat',
+            lang: 'en-US',
+            image: 'images/dragon-boat.png',
+            fallback: FALLBACK.dragonBoat
+        },
+        {
+            key: 'stand-an-egg',
+            word: 'stand an egg',
+            speakText: 'stand an egg',
+            lang: 'en-US',
+            image: 'images/stand-an-egg.png',
+            fallback: FALLBACK.standEgg
+        },
+        {
+            key: 'qu-yuan',
+            word: 'Qu Yuan',
+            // 顯示為 Qu Yuan；發音用英文 TTS 可讀的拼音提示 Chu Yen，接近「屈原」但保留外國腔。
+            // 可自行微調：'Chu Yen'、'Choo Yen'、'Chu Yuen' 都可測試。
+            speakText: 'Chu Yen',
+            lang: 'en-US',
+            image: 'images/qu-yuan.png',
+            fallback: FALLBACK.quYuan
+        },
+        {
+            key: 'sachet',
+            word: 'sachet',
+            speakText: 'sachet',
+            lang: 'en-US',
+            image: 'images/sachet.png',
+            fallback: FALLBACK.sachet
+        }
+    ];
+
+    /* =========================================================
+       音效與語音
+       ========================================================= */
+    let audioCtx;
+    function playTone(frequency, type = 'sine', duration = 0.12, gainValue = 0.07) {
+        try {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+            gain.gain.setValueAtTime(gainValue, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.005, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        } catch (err) {
+            // 部分瀏覽器或投影環境可能限制 AudioContext，忽略即可。
+        }
+    }
+
+    function getPreferredVoice(lang) {
+        const voices = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+        if (!voices || !voices.length) return null;
+        const lower = lang.toLowerCase();
+        return voices.find(v => v.lang.toLowerCase() === lower)
+            || voices.find(v => v.lang.toLowerCase().startsWith(lower.slice(0, 2)))
+            || null;
+    }
+
+    function speakItem(item) {
+        if (!('speechSynthesis' in window)) return;
+        speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(item.speakText);
+        utter.lang = item.lang;
+        utter.rate = item.key === 'qu-yuan' ? 0.68 : 0.78;
+        utter.pitch = item.key === 'qu-yuan' ? 1.02 : 1.0;
+        utter.volume = 1;
+        const voice = getPreferredVoice(item.lang);
+        if (voice) utter.voice = voice;
+        speechSynthesis.speak(utter);
+    }
+
+    if ('speechSynthesis' in window) {
+        speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+    }
+
+    /* =========================================================
+       遊戲狀態
+       ========================================================= */
+    let isPlaying = false;
+    let loopStarted = false;
+    let timerId = null;
+    let questionTimer = null;
+    let gameDuration = 60;
+    let timeRemaining = 60;
+
+    let blueY = 0;
+    let redY = 0;
+    let scoreBlue = 0;
+    let scoreRed = 0;
+    let comboBlue = 0;
+    let comboRed = 0;
+
+    let currentItem = null;
+    let currentOrder = [];
+    let questionStartTime = 0;
+    let firstCorrectTeam = null;
+    let answeredBlue = false;
+    let answeredRed = false;
+    let roundTransition = false;
+    let lastQuestionKey = null;
+
+    const moveMax = 92;        // 速度最快時前進距離
+    const moveMin = 38;        // 太慢答對時仍會前進
+    const firstBonus = 18;     // 第一個答對額外前進
+    const arrowPenalty = 56;   // 三連先答對，對方後退距離
+    const nextDelayAfterFirst = 1550;
+    const nextDelayAfterBoth = 650;
+
+    const lobby = document.getElementById('lobby');
+    const timerDisplay = document.getElementById('timer-display');
+    const boatBlue = document.getElementById('boat-blue');
+    const boatRed = document.getElementById('boat-red');
+    const boatBlueImg = document.getElementById('boat-blue-img');
+    const boatRedImg = document.getElementById('boat-red-img');
+    const choicesBlue = document.getElementById('choices-blue');
+    const choicesRed = document.getElementById('choices-red');
+    const feedbackBlue = document.getElementById('feedback-blue');
+    const feedbackRed = document.getElementById('feedback-red');
+    const roundBanner = document.getElementById('round-banner');
+    const arrowShot = document.getElementById('arrow-shot');
+    const winnerScreen = document.getElementById('winner-screen');
+
+    // 龍舟本體使用 dragon boat 圖片；載入不到時用內建龍舟圖。
+    const dragonBoatItem = VOCAB.find(x => x.key === 'dragon-boat');
+    boatBlueImg.src = dragonBoatItem.image;
+    boatRedImg.src = dragonBoatItem.image;
+    boatBlueImg.onerror = () => { boatBlueImg.src = dragonBoatItem.fallback; };
+    boatRedImg.onerror = () => { boatRedImg.src = dragonBoatItem.fallback; };
+
+    function syncWordToggle(checked) {
+        document.body.classList.toggle('show-words', checked);
+        document.getElementById('show-word-toggle').checked = checked;
+        document.getElementById('top-word-toggle').checked = checked;
+    }
+
+    document.getElementById('show-word-toggle').addEventListener('change', e => syncWordToggle(e.target.checked));
+    document.getElementById('top-word-toggle').addEventListener('change', e => syncWordToggle(e.target.checked));
+
+    document.querySelectorAll('.btn-time').forEach(btn => {
+        btn.addEventListener('pointerdown', e => {
+            e.preventDefault();
+            playTone(640, 'sine', .09);
+            document.querySelectorAll('.btn-time').forEach(x => x.classList.remove('selected'));
+            btn.classList.add('selected');
+            gameDuration = parseInt(btn.dataset.time, 10);
+            timeRemaining = gameDuration;
+            timerDisplay.textContent = timeRemaining;
+        });
+    });
+
+    document.getElementById('btn-test-audio').addEventListener('pointerdown', e => {
+        e.preventDefault();
+        // Qu Yuan 使用拼音提示 Chu Yen：接近「屈原」，但仍保留英文語音的外國腔。
+        const quYuan = VOCAB.find(x => x.key === 'qu-yuan');
+        speakItem(quYuan);
+    });
+
+    document.getElementById('btn-listen').addEventListener('pointerdown', e => {
+        e.preventDefault();
+        if (currentItem) speakItem(currentItem);
+    });
+
+    document.getElementById('btn-fullscreen').addEventListener('pointerdown', async e => {
+        e.preventDefault();
+        try {
+            if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+            else await document.exitFullscreen();
+        } catch (err) {}
+    });
+
+    document.getElementById('btn-start').addEventListener('pointerdown', e => {
+        e.preventDefault();
+        startGame();
+    });
+
+    function startGame() {
+        playTone(520, 'sine', .12);
+        playTone(760, 'sine', .18);
+        lobby.classList.add('hidden');
+        isPlaying = true;
+        roundTransition = false;
+        timeRemaining = gameDuration;
+        timerDisplay.textContent = timeRemaining;
+        resetBoats();
+        updateScores();
+        showBanner('READY?', '#fef3c7', 650);
+
+        if (!loopStarted) {
+            loopStarted = true;
+            requestAnimationFrame(loop);
+        }
+
+        clearInterval(timerId);
+        timerId = setInterval(() => {
+            if (!isPlaying) return;
+            timeRemaining--;
+            timerDisplay.textContent = timeRemaining;
+            if (timeRemaining <= 10) {
+                timerDisplay.style.color = '#fb7185';
+                playTone(540, 'square', .05, .035);
+            }
+            if (timeRemaining <= 0) endGame();
+        }, 1000);
+
+        setTimeout(() => {
+            if (isPlaying) nextQuestion();
+        }, 720);
+    }
+
+    function shuffle(array) {
+        const arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function pickNextItem() {
+        let item = VOCAB[Math.floor(Math.random() * VOCAB.length)];
+        if (VOCAB.length > 1) {
+            while (item.key === lastQuestionKey) {
+                item = VOCAB[Math.floor(Math.random() * VOCAB.length)];
+            }
+        }
+        lastQuestionKey = item.key;
+        return item;
+    }
+
+    function nextQuestion() {
+        if (!isPlaying || roundTransition || timeRemaining <= 0) return;
+        clearTimeout(questionTimer);
+        currentItem = pickNextItem();
+        currentOrder = shuffle(VOCAB);
+        questionStartTime = performance.now();
+        firstCorrectTeam = null;
+        answeredBlue = false;
+        answeredRed = false;
+        feedbackBlue.textContent = '';
+        feedbackRed.textContent = '';
+        renderChoices();
+        speakItem(currentItem);
+        playTone(420, 'triangle', .08, .035);
+    }
+
+    function renderChoices() {
+        renderTeamChoices('BLUE', choicesBlue);
+        renderTeamChoices('RED', choicesRed);
+    }
+
+    function renderTeamChoices(team, container) {
+        container.innerHTML = '';
+        currentOrder.forEach(item => {
+            const btn = document.createElement('button');
+            btn.className = 'choice-card';
+            btn.type = 'button';
+            btn.dataset.key = item.key;
+            btn.setAttribute('aria-label', `${team} ${item.word}`);
+
+            const img = document.createElement('img');
+            img.src = item.image;
+            img.alt = item.word;
+            img.onerror = () => {
+                img.onerror = null;
+                img.src = item.fallback;
+            };
+
+            const label = document.createElement('div');
+            label.className = 'word-label';
+            label.textContent = item.word;
+
+            btn.appendChild(img);
+            btn.appendChild(label);
+            btn.addEventListener('pointerdown', e => {
+                e.preventDefault();
+                handleAnswer(team, item.key, btn);
+            });
+            container.appendChild(btn);
+        });
+    }
+
+    function handleAnswer(team, selectedKey, buttonEl) {
+        if (!isPlaying || !currentItem || roundTransition) return;
+        if (team === 'BLUE' && answeredBlue) return;
+        if (team === 'RED' && answeredRed) return;
+
+        const isCorrect = selectedKey === currentItem.key;
+        const feedbackEl = team === 'BLUE' ? feedbackBlue : feedbackRed;
+
+        if (!isCorrect) {
+            playTone(160, 'sawtooth', .12, .045);
+            feedbackEl.textContent = 'Try again!';
+            buttonEl.classList.remove('wrong');
+            void buttonEl.offsetWidth;
+            buttonEl.classList.add('wrong');
+            setTimeout(() => buttonEl.classList.remove('wrong'), 380);
+            return;
+        }
+
+        const elapsed = (performance.now() - questionStartTime) / 1000;
+        let move = getMoveAmount(elapsed);
+        let isFirst = false;
+
+        if (team === 'BLUE') answeredBlue = true;
+        if (team === 'RED') answeredRed = true;
+
+        if (!firstCorrectTeam) {
+            firstCorrectTeam = team;
+            isFirst = true;
+            move += firstBonus;
+            addCombo(team);
+        }
+
+        feedbackEl.textContent = isFirst ? 'First! +' + Math.round(move) : 'Good! +' + Math.round(move);
+        buttonEl.classList.add('correct');
+        disableCorrectTeamButtons(team);
+        moveBoat(team, move);
+        playCorrectSound(isFirst);
+
+        if (answeredBlue && answeredRed) {
+            clearTimeout(questionTimer);
+            questionTimer = setTimeout(nextQuestion, nextDelayAfterBoth);
+        } else if (isFirst) {
+            clearTimeout(questionTimer);
+            questionTimer = setTimeout(nextQuestion, nextDelayAfterFirst);
+        }
+    }
+
+    function getMoveAmount(elapsedSeconds) {
+        // 0.4 秒左右可拿滿分；4.5 秒以上降到最低，但仍可前進。
+        const t = Math.max(0, Math.min(4.5, elapsedSeconds));
+        const ratio = 1 - (t / 4.5);
+        const eased = ratio * ratio;
+        return moveMin + (moveMax - moveMin) * eased;
+    }
+
+    function disableCorrectTeamButtons(team) {
+        const container = team === 'BLUE' ? choicesBlue : choicesRed;
+        container.querySelectorAll('button').forEach(btn => btn.disabled = true);
+    }
+
+    function playCorrectSound(isFirst) {
+        if (isFirst) {
+            playTone(720, 'sine', .08, .055);
+            setTimeout(() => playTone(980, 'sine', .11, .055), 70);
+        } else {
+            playTone(640, 'sine', .1, .045);
+        }
+    }
+
+    function addCombo(team) {
+        if (team === 'BLUE') {
+            comboBlue++;
+            comboRed = 0;
+            if (comboBlue >= 3) {
+                comboBlue = 0;
+                triggerArrow('BLUE');
+            }
+        } else {
+            comboRed++;
+            comboBlue = 0;
+            if (comboRed >= 3) {
+                comboRed = 0;
+                triggerArrow('RED');
+            }
+        }
+        updateScores();
+    }
+
+    function triggerArrow(fromTeam) {
+        if (!isPlaying || roundTransition) return;
+        const target = fromTeam === 'BLUE' ? 'RED' : 'BLUE';
+        showBanner(`${fromTeam} 三連先答對！射箭！`, '#facc15', 900);
+        playTone(980, 'triangle', .08, .07);
+        setTimeout(() => playTone(360, 'square', .16, .06), 130);
+
+        arrowShot.className = 'arrow-shot';
+        void arrowShot.offsetWidth;
+        arrowShot.classList.add(fromTeam === 'BLUE' ? 'fly-right' : 'fly-left');
+
+        setTimeout(() => {
+            if (target === 'BLUE') {
+                blueY = Math.max(0, blueY - arrowPenalty);
+                boatBlue.classList.add('hit');
+                setTimeout(() => boatBlue.classList.remove('hit'), 520);
+            } else {
+                redY = Math.max(0, redY - arrowPenalty);
+                boatRed.classList.add('hit');
+                setTimeout(() => boatRed.classList.remove('hit'), 520);
+            }
+            updateBoatPositions();
+        }, 530);
+    }
+
+    function moveBoat(team, amount) {
+        if (team === 'BLUE') {
+            blueY += amount;
+            boatBlue.classList.remove('paddling');
+            void boatBlue.offsetWidth;
+            boatBlue.classList.add('paddling');
+            setTimeout(() => boatBlue.classList.remove('paddling'), 450);
+        } else {
+            redY += amount;
+            boatRed.classList.remove('paddling');
+            void boatRed.offsetWidth;
+            boatRed.classList.add('paddling');
+            setTimeout(() => boatRed.classList.remove('paddling'), 450);
+        }
+        updateBoatPositions();
+        checkRoundWinner();
+    }
+
+    function updateBoatPositions() {
+        const maxY = getWinY() + 20;
+        blueY = Math.max(0, Math.min(maxY, blueY));
+        redY = Math.max(0, Math.min(maxY, redY));
+        boatBlue.style.bottom = blueY + 'px';
+        boatRed.style.bottom = redY + 'px';
+    }
+
+    function getWinY() {
+        const arena = document.getElementById('game-arena');
+        const finish = document.querySelector('.finish-line');
+        const arenaH = arena.clientHeight;
+        const lineTop = finish.offsetTop;
+        const boatH = boatBlue.getBoundingClientRect().height || 76;
+        return Math.max(140, arenaH - lineTop - boatH - 8);
+    }
+
+    function checkRoundWinner() {
+        if (roundTransition || !isPlaying) return;
+        const winY = getWinY();
+        if (blueY >= winY && redY >= winY) {
+            const winner = blueY >= redY ? 'BLUE' : 'RED';
+            triggerRound(winner);
+        } else if (blueY >= winY) {
+            triggerRound('BLUE');
+        } else if (redY >= winY) {
+            triggerRound('RED');
+        }
+    }
+
+    function triggerRound(winner) {
+        if (roundTransition) return;
+        roundTransition = true;
+        clearTimeout(questionTimer);
+        if (winner === 'BLUE') scoreBlue++;
+        else scoreRed++;
+        updateScores();
+        playTone(880, 'sine', .18, .075);
+        setTimeout(() => playTone(1175, 'sine', .24, .075), 120);
+        showBanner(`${winner} GETS 1 POINT!`, winner === 'BLUE' ? '#60a5fa' : '#f87171', 1600);
+        disableAllChoices(true);
+
+        setTimeout(() => {
+            if (timeRemaining <= 0) return;
+            resetBoats();
+            disableAllChoices(false);
+            roundTransition = false;
+            nextQuestion();
+        }, 2300);
+    }
+
+    function resetBoats() {
+        blueY = 0;
+        redY = 0;
+        updateBoatPositions();
+    }
+
+    function disableAllChoices(disabled) {
+        document.querySelectorAll('.choice-card').forEach(btn => btn.disabled = disabled);
+    }
+
+    function updateScores() {
+        document.getElementById('score-blue').textContent = scoreBlue;
+        document.getElementById('score-red').textContent = scoreRed;
+        document.getElementById('combo-blue').textContent = comboBlue;
+        document.getElementById('combo-red').textContent = comboRed;
+    }
+
+    function showBanner(text, color = '#fef3c7', duration = 900) {
+        roundBanner.textContent = text;
+        roundBanner.style.color = color;
+        roundBanner.classList.add('show');
+        clearTimeout(roundBanner.timer);
+        roundBanner.timer = setTimeout(() => roundBanner.classList.remove('show'), duration);
+    }
+
+    function endGame() {
+        if (!isPlaying && winnerScreen.classList.contains('active')) return;
+        isPlaying = false;
+        roundTransition = true;
+        clearInterval(timerId);
+        clearTimeout(questionTimer);
+        speechSynthesis && speechSynthesis.cancel();
+        disableAllChoices(true);
+        playTone(420, 'sine', .3, .07);
+        setTimeout(() => playTone(640, 'sine', .35, .07), 230);
+
+        const text = document.getElementById('winner-text');
+        if (scoreBlue > scoreRed) {
+            text.textContent = 'TEAM BLUE WINS!';
+            text.style.color = '#60a5fa';
+        } else if (scoreRed > scoreBlue) {
+            text.textContent = 'TEAM RED WINS!';
+            text.style.color = '#f87171';
+        } else {
+            text.textContent = "IT'S A DRAW!";
+            text.style.color = '#fef3c7';
+        }
+        document.getElementById('final-score').textContent = `BLUE ${scoreBlue} : ${scoreRed} RED`;
+        winnerScreen.classList.add('active');
+    }
+
+    function loop() {
+        requestAnimationFrame(loop);
+        if (!isPlaying || roundTransition) return;
+        checkRoundWinner();
+    }
+
+    // 初始畫面：先渲染一次，避免還沒開始時下方空白。
+    currentOrder = VOCAB;
+    currentItem = VOCAB[0];
+    renderChoices();
+    disableAllChoices(true);
+    syncWordToggle(false);
+</script>
+</body>
+</html>
